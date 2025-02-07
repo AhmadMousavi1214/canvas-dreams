@@ -7,9 +7,11 @@ const router = express.Router();
 // User Routes
 router.post("/register", UserController.createUser);
 router.post("/login", UserController.login);
-router.get("/", authenticateUser, UserController.getAllUsers);
-router.get("/:id", authenticateUser, UserController.getUserById);
-router.put("/:id", authenticateUser, UserController.updateUser);
-router.delete("/:id", authenticateUser, UserController.deleteUser);
+router.get("/me", authenticateUser, UserController.getProfile);
+router.put("/me", authenticateUser, UserController.updateProfile);
+router.delete("/me", authenticateUser, UserController.deleteAccount);
+
+// Admin routes (Superuser only)
+router.get("/", authenticateUser, isSuperuser, UserController.getAllUsers);
 
 module.exports = router;
