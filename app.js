@@ -1,24 +1,40 @@
-const express = require('express');
-const app = express();
-const db = require('./config/database');
+const express = require("express");
+const next = require("next");
+const db = require("./config/database");
 
-// Import routes
-const userRoutes = require('./src/routes/userRoutes');
-const orderRoutes = require('./src/routes/orderRoutes');
-const paintingRoutes = require('./src/routes/paintingRoutes');
+require("dotenv").config(); // Load environment variables
+
+const dev = process.env.NODE_ENV !== "production"; // Check if in dev mode
+const app = next({ dev, dir: "./src/views" }); // Next.js frontend in 'src/views'
+const handle = app.getRequestHandler(); // Handles Next.js requests
+
+const server = express();
 
 // Middleware
-app.use(express.json());
+server.use(express.json());
 
-// Use routes
-app.use('/users', userRoutes);
-app.use('/orders', orderRoutes);
-app.use('/paintings', paintingRoutes);
+// Import API routes
+const userRoutes = require("./src/routes/userRoutes");
+const orderRoutes = require("./src/routes/orderRoutes");
+const paintingRoutes = require("./src/routes/paintingRoutes");
 
-// Test database connection
+// Use API routes
+server.use("/users", userRoutes);
+server.use("/orders", orderRoutes);
+server.use("/paintings", paintingRoutes);
+
+// Connect to the database
 db.authenticate()
-    .then(() => console.log('Database connected...'))
-    .catch(err => console.log('Error: ' + err));
+  .then(() => console.log("✅ Database connected..."))
+  .catch((err) => console.log("❌ Error: " + err));
 
-// Start the server
-app.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`));
+// Prepare Next.js and start server
+app.prepare().then(() => {
+  
+  // Handle all other requests with Next.js
+  server.all("*", (req, res) => {
+    return handle(req, res);
+  });
+
+  server.listen(process.env.PORT, () => console.log(`🚀 Server running on http://localhost:${process.env.PORT}`));
+});
